@@ -38,8 +38,13 @@ function Export-ADInfo {
             [scriptblock]$valueExpression
         )
         $filePath = Join-Path $outputDir $fileName
-        & $dataCommand | ForEach-Object {
-            Add-ToCSV -filePath $filePath -category $category -name (& $nameExpression $_) -value (& $valueExpression $_)
+        $pageSize = 1000
+        $data = & $dataCommand -ResultPageSize $pageSize -Server $domain.DNSRoot
+        while ($data -ne $null) {
+            $data.Objects | ForEach-Object {
+                Add-ToCSV -filePath $filePath -category $category -name (& $nameExpression $_) -value (& $valueExpression $_)
+            }
+            $data = $data.NextPage
         }
     }
 
@@ -47,30 +52,23 @@ function Export-ADInfo {
     $domain = Get-ADDomain
     Add-ToCSV -filePath (Join-Path $outputDir "DomainInformation.csv") -category "Domain Information" -name $domain.DNSRoot -value $null
 
-    # Collect Users in batches
-    $userProperties = 'Name', 'DistinguishedName', 'EmailAddress', 'Department', 'Title'
-    $batchSize = 100
-    $skip = 0
-    $userFilePath = Join-Path $outputDir "Users.csv"
-    do {
-        $users = Get-ADUser -Filter * -Property $userProperties -ResultSetSize $batchSize -SearchScope Subtree -Skip $skip
-        $users | ForEach-Object {
-            Add-ToCSV -filePath $userFilePath -category "Users" -name $_.Name -value "DN: $($_.DistinguishedName), Email: $($_.EmailAddress), Dept: $($_.Department), Title: $($_.Title)"
-        }
-        $skip += $batchSize
-    } while ($users.Count -eq $batchSize)
+    # Collect Users
+    Collect-Data {
+        Get-ADUser -Filter * -Property Name, DistinguishedName, EmailAddress, Department, Title
+    } "Users.csv" "Users" {
+        $_.Name
+    } {
+        "DN: $($_.DistinguishedName), Email: $($_.EmailAddress), Dept: $($_.Department), Title: $($_.Title)"
+    }
 
-    # Collect Groups in batches
-    $groupProperties = 'Name', 'GroupScope', 'GroupCategory'
-    $skip = 0
-    $groupFilePath = Join-Path $outputDir "Groups.csv"
-    do {
-        $groups = Get-ADGroup -Filter * -Property $groupProperties -ResultSetSize $batchSize -SearchScope Subtree -Skip $skip
-        $groups | ForEach-Object {
-            Add-ToCSV -filePath $groupFilePath -category "Groups" -name $_.Name -value "Scope: $($_.GroupScope), Category: $($_.GroupCategory)"
-        }
-        $skip += $batchSize
-    } while ($groups.Count -eq $batchSize)
+    # Collect Groups
+    Collect-Data {
+        Get-ADGroup -Filter * -Property Name, GroupScope, GroupCategory
+    } "Groups.csv" "Groups" {
+        $_.Name
+    } {
+        "Scope: $($_.GroupScope), Category: $($_.GroupCategory)"
+    }
 
     # Collect Group Memberships including nested groups
     $groupMembershipFilePath = Join-Path $outputDir "GroupMemberships.csv"
