@@ -99,14 +99,19 @@ function Export-ADInfo {
     # Collect GPO Links
     $gpoLinkFilePath = Join-Path $outputDir "GPOLinks.csv"
     foreach ($gpo in $gpos) {
-        $gpoReport = Get-GPOReport -Guid $gpo.Id -ReportType Xml
-        $gpoLinks = $gpoReport | Select-Xml -XPath "//gpoLinksTo" | ForEach-Object {
-            [PSCustomObject]@{
-                GpoName = $_.Node.SelectSingleNode("displayName").InnerText
-                Link    = $_.Node.SelectSingleNode("path").InnerText
+        try {
+            $gpoReport = Get-GPOReport -Guid $gpo.Id -ReportType Xml
+            $xml = [xml]$gpoReport
+            $gpoLinks = $xml.SelectNodes("//gpoLinksTo") | ForEach-Object {
+                [PSCustomObject]@{
+                    GpoName = $_.displayName
+                    Link    = $_.path
+                }
             }
+            Add-ToCSV -filePath $gpoLinkFilePath -data $gpoLinks
+        } catch {
+            Write-Warning "Failed to get GPO links for GPO $($gpo.DisplayName): $_"
         }
-        Add-ToCSV -filePath $gpoLinkFilePath -data $gpoLinks
     }
 
     # Collect FSMO Roles
