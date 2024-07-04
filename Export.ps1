@@ -10,7 +10,7 @@ if (-not (Test-Path -Path $outputDir)) {
 function Add-ToCSV {
     param (
         [string]$filePath,
-        [object]$data,
+        [array]$data,
         [array]$headers = @()
     )
     if ($headers -ne $null -and (Test-Path $filePath) -eq $false) {
