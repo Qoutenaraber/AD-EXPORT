@@ -10,16 +10,9 @@ if (-not (Test-Path -Path $outputDir)) {
 function Add-ToCSV {
     param (
         [string]$filePath,
-        [string]$category,
-        [string]$name,
-        [string]$value
+        [object]$data
     )
-    $entry = [PSCustomObject]@{
-        Category = $category
-        Name     = $name
-        Value    = $value
-    }
-    $entry | Export-Csv -Path $filePath -Append -NoTypeInformation -Encoding UTF8
+    $data | Export-Csv -Path $filePath -Append -NoTypeInformation -Encoding UTF8
 }
 
 # Function to collect and export AD information
@@ -28,59 +21,39 @@ function Export-ADInfo {
         [string]$outputDir
     )
 
-    # Helper function to handle repetitive tasks
-    function Collect-Data {
-        param (
-            [scriptblock]$dataCommand,
-            [string]$fileName,
-            [string]$category,
-            [scriptblock]$nameExpression,
-            [scriptblock]$valueExpression
-        )
-        $filePath = Join-Path $outputDir $fileName
-        $pageSize = 1000
-        $data = & $dataCommand -ResultPageSize $pageSize -Server $domain.DNSRoot
-        while ($data -ne $null) {
-            $data.Objects | ForEach-Object {
-                Add-ToCSV -filePath $filePath -category $category -name (& $nameExpression $_) -value (& $valueExpression $_)
-            }
-            $data = $data.NextPage
-        }
-    }
-
     # Collect Domain Information
     $domain = Get-ADDomain
-    Add-ToCSV -filePath (Join-Path $outputDir "DomainInformation.csv") -category "Domain Information" -name $domain.DNSRoot -value $null
+    $domainInfo = [PSCustomObject]@{
+        Category = "Domain Information"
+        Name     = $domain.DNSRoot
+        Value    = $null
+    }
+    Add-ToCSV -filePath (Join-Path $outputDir "DomainInformation.csv") -data $domainInfo
 
     # Collect Users
-    Collect-Data {
-        Get-ADUser -Filter * -Property Name, DistinguishedName, EmailAddress, Department, Title
-    } "Users.csv" "Users" {
-        $_.Name
-    } {
-        "DN: $($_.DistinguishedName), Email: $($_.EmailAddress), Dept: $($_.Department), Title: $($_.Title)"
-    }
+    $userFilePath = Join-Path $outputDir "Users.csv"
+    $users = Get-ADUser -Filter * -Property DisplayName, SamAccountName, EmailAddress, Department, Title
+    $userData = $users | Select-Object DisplayName, SamAccountName, EmailAddress, Department, Title
+    Add-ToCSV -filePath $userFilePath -data $userData
 
     # Collect Groups
-    Collect-Data {
-        Get-ADGroup -Filter * -Property Name, GroupScope, GroupCategory
-    } "Groups.csv" "Groups" {
-        $_.Name
-    } {
-        "Scope: $($_.GroupScope), Category: $($_.GroupCategory)"
-    }
+    $groupFilePath = Join-Path $outputDir "Groups.csv"
+    $groups = Get-ADGroup -Filter * -Property Name, GroupScope, GroupCategory, Description
+    $groupData = $groups | Select-Object Name, GroupScope, GroupCategory, Description
+    Add-ToCSV -filePath $groupFilePath -data $groupData
 
-    # Collect Group Memberships including nested groups
+    # Collect Group Memberships
     $groupMembershipFilePath = Join-Path $outputDir "GroupMemberships.csv"
-    $groups = Get-ADGroup -Filter * -Property Name
     foreach ($group in $groups) {
         try {
             $members = Get-ADGroupMember -Identity $group.Name -ErrorAction Stop
-            $members | ForEach-Object {
-                Add-ToCSV -filePath $groupMembershipFilePath -category "Group Memberships" -name $_.Name -value "Member of: $($group.Name)"
-                if ($_.objectClass -eq 'group') {
-                    Add-ToCSV -filePath $groupMembershipFilePath -category "Group Memberships" -name $_.Name -value "Group Member of: $($group.Name)"
+            foreach ($member in $members) {
+                $memberInfo = [PSCustomObject]@{
+                    GroupName  = $group.Name
+                    UserName   = $member.SamAccountName
+                    MemberType = $member.objectClass
                 }
+                Add-ToCSV -filePath $groupMembershipFilePath -data $memberInfo
             }
         } catch {
             Write-Warning "Failed to get members for group $($group.Name): $_"
@@ -88,72 +61,66 @@ function Export-ADInfo {
     }
 
     # Collect Organizational Units
-    Collect-Data {
-        Get-ADOrganizationalUnit -Filter * | Select-Object -Property Name, DistinguishedName
-    } "OrganizationalUnits.csv" "Organizational Units" {
-        $_.Name
-    } {
-        $_.DistinguishedName
-    }
+    $ouFilePath = Join-Path $outputDir "OrganizationalUnits.csv"
+    $ous = Get-ADOrganizationalUnit -Filter * -Property Name, DistinguishedName
+    $ouData = $ous | Select-Object Name, DistinguishedName
+    Add-ToCSV -filePath $ouFilePath -data $ouData
 
     # Collect Domain Controllers
-    Collect-Data {
-        Get-ADDomainController -Filter * | Select-Object -Property Name, Site, IPv4Address, OperatingSystem
-    } "DomainControllers.csv" "Domain Controllers" {
-        $_.Name
-    } {
-        "Site: $($_.Site), IP: $($_.IPv4Address), OS: $($_.OperatingSystem)"
-    }
+    $dcFilePath = Join-Path $outputDir "DomainControllers.csv"
+    $dcs = Get-ADDomainController -Filter * -Property Name, Site, IPv4Address, OperatingSystem
+    $dcData = $dcs | Select-Object Name, Site, IPv4Address, OperatingSystem
+    Add-ToCSV -filePath $dcFilePath -data $dcData
 
     # Collect Sites
-    Collect-Data {
-        Get-ADReplicationSite -Filter * | Select-Object -Property Name
-    } "Sites.csv" "Sites" {
-        $_.Name
-    } {
-        $null
-    }
+    $siteFilePath = Join-Path $outputDir "Sites.csv"
+    $sites = Get-ADReplicationSite -Filter * -Property Name
+    $siteData = $sites | Select-Object Name
+    Add-ToCSV -filePath $siteFilePath -data $siteData
 
     # Collect Subnets
-    Collect-Data {
-        Get-ADReplicationSubnet -Filter * | Select-Object -Property Name, Site
-    } "Subnets.csv" "Subnets" {
-        $_.Name
-    } {
-        $_.Site
-    }
+    $subnetFilePath = Join-Path $outputDir "Subnets.csv"
+    $subnets = Get-ADReplicationSubnet -Filter * -Property Name, Site
+    $subnetData = $subnets | Select-Object Name, Site
+    Add-ToCSV -filePath $subnetFilePath -data $subnetData
 
     # Collect GPOs
-    Collect-Data {
-        Get-GPO -All | Select-Object -Property DisplayName, Id
-    } "GPOs.csv" "GPOs" {
-        $_.DisplayName
-    } {
-        $_.Id
-    }
+    $gpoFilePath = Join-Path $outputDir "GPOs.csv"
+    $gpos = Get-GPO -All | Select-Object DisplayName, Id
+    Add-ToCSV -filePath $gpoFilePath -data $gpos
 
     # Collect GPO Links
-    Collect-Data {
-        Get-GPO -All | ForEach-Object {
-            Get-GPOReport -Guid $_.Id -ReportType Xml | Select-Xml -XPath "//gpoLinksTo" | ForEach-Object {
-                [PSCustomObject]@{GpoName = $_.Node.SelectSingleNode("displayName").InnerText; Link = $_.Node.SelectSingleNode("path").InnerText}
+    $gpoLinkFilePath = Join-Path $outputDir "GPOLinks.csv"
+    foreach ($gpo in $gpos) {
+        $gpoReport = Get-GPOReport -Guid $gpo.Id -ReportType Xml
+        $gpoLinks = $gpoReport | Select-Xml -XPath "//gpoLinksTo" | ForEach-Object {
+            [PSCustomObject]@{
+                GpoName = $_.Node.SelectSingleNode("displayName").InnerText
+                Link    = $_.Node.SelectSingleNode("path").InnerText
             }
         }
-    } "GPOLinks.csv" "GPO Links" {
-        $_.GpoName
-    } {
-        $_.Link
+        Add-ToCSV -filePath $gpoLinkFilePath -data $gpoLinks
     }
 
     # Collect FSMO Roles
-    $forest = Get-ADForest
     $fsmoRolesFilePath = Join-Path $outputDir "FSMORoles.csv"
+    $forest = Get-ADForest
+    $fsmoRoles = @()
     foreach ($role in @("InfrastructureMaster", "PDCEmulator", "RIDMaster")) {
-        Add-ToCSV -filePath $fsmoRolesFilePath -category "FSMO Roles" -name $role -value $domain.$role
+        $fsmoRoles += [PSCustomObject]@{
+            Category = "FSMO Roles"
+            Name     = $role
+            Value    = $domain.$role
+        }
     }
     foreach ($role in @("DomainNamingMaster", "SchemaMaster")) {
-        Add-ToCSV -filePath $fsmoRolesFilePath -category "FSMO Roles" -name $role -value $forest.$role
+        $fsmoRoles += [PSCustomObject]@{
+            Category = "FSMO Roles"
+            Name     = $role
+            Value    = $forest.$role
+        }
     }
+    Add-ToCSV -filePath $fsmoRolesFilePath -data $fsmoRoles
 
     # Display completion message
     Write-Host "Data collection complete. CSV files saved to $outputDir"
