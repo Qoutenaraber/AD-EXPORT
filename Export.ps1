@@ -12,7 +12,9 @@ function Add-ToCSV {
         [string]$filePath,
         [object]$data
     )
-    $data | Export-Csv -Path $filePath -Append -NoTypeInformation -Encoding UTF8
+    if ($data -ne $null -and $data.Count -gt 0) {
+        $data | Export-Csv -Path $filePath -Append -NoTypeInformation -Encoding UTF8
+    }
 }
 
 # Function to collect and export AD information
@@ -42,8 +44,9 @@ function Export-ADInfo {
     $groupData = $groups | Select-Object Name, GroupScope, GroupCategory, Description
     Add-ToCSV -filePath $groupFilePath -data $groupData
 
-    # Collect Group Memberships
+    # Collect Group Memberships and log errors
     $groupMembershipFilePath = Join-Path $outputDir "GroupMemberships.csv"
+    $groupMembershipErrorsFilePath = Join-Path $outputDir "GroupMembershipErrors.csv"
     foreach ($group in $groups) {
         try {
             $members = Get-ADGroupMember -Identity $group.Name -ErrorAction Stop
@@ -56,7 +59,11 @@ function Export-ADInfo {
                 Add-ToCSV -filePath $groupMembershipFilePath -data $memberInfo
             }
         } catch {
-            Write-Warning "Failed to get members for group $($group.Name): $_"
+            $errorInfo = [PSCustomObject]@{
+                GroupName = $group.Name
+                Error     = $_.Exception.Message
+            }
+            Add-ToCSV -filePath $groupMembershipErrorsFilePath -data $errorInfo
         }
     }
 
