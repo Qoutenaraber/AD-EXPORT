@@ -74,12 +74,16 @@ function Export-ADInfo {
     $groupMembershipFilePath = Join-Path $outputDir "GroupMemberships.csv"
     $groups = Get-ADGroup -Filter * -Property Name
     foreach ($group in $groups) {
-        $members = Get-ADGroupMember -Identity $group.Name
-        $members | ForEach-Object {
-            Add-ToCSV -filePath $groupMembershipFilePath -category "Group Memberships" -name $_.Name -value "Member of: $($group.Name)"
-            if ($_.objectClass -eq 'group') {
-                Add-ToCSV -filePath $groupMembershipFilePath -category "Group Memberships" -name $_.Name -value "Group Member of: $($group.Name)"
+        try {
+            $members = Get-ADGroupMember -Identity $group.Name -ErrorAction Stop
+            $members | ForEach-Object {
+                Add-ToCSV -filePath $groupMembershipFilePath -category "Group Memberships" -name $_.Name -value "Member of: $($group.Name)"
+                if ($_.objectClass -eq 'group') {
+                    Add-ToCSV -filePath $groupMembershipFilePath -category "Group Memberships" -name $_.Name -value "Group Member of: $($group.Name)"
+                }
             }
+        } catch {
+            Write-Warning "Failed to get members for group $($group.Name): $_"
         }
     }
 
