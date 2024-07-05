@@ -84,19 +84,31 @@ foreach ($group in $groups) {
     $gpos = Get-GPO -All | Select-Object DisplayName, Id
     Add-ToCSV -filePath (Join-Path $outputDir "GPOs.csv") -data $gpos
 
-    $gpoLinks = @()
-    foreach ($gpo in $gpos) {
-        try {
-            $gpoReport = Get-GPOReport -Guid $gpo.Id -ReportType Xml
-            $xml = [xml]$gpoReport
-            $gpoLinks += $xml.SelectNodes("//gpoLinksTo") | ForEach-Object {
-                [PSCustomObject]@{GpoName = $_.displayName; Link = $_.path}
+    # Fix for the problematic part: GPOLinks
+$gpoLinks = @()
+$gpoLinkErrors = @()
+
+foreach ($gpo in $gpos) {
+    try {
+        $gpoReport = Get-GPOReport -Guid $gpo.Id -ReportType Xml
+        $xml = [xml]$gpoReport
+        $links = $xml.GPO.LinksTo | ForEach-Object {
+            [PSCustomObject]@{
+                GpoName = $gpo.DisplayName
+                Link = $_.Target
             }
-        } catch {
-            $groupMembershipErrors += [PSCustomObject]@{GpoName=$gpo.DisplayName; Error=$_.Exception.Message}
+        }
+        $gpoLinks += $links
+    } catch {
+        $gpoLinkErrors += [PSCustomObject]@{
+            GpoName = $gpo.DisplayName
+            Error = $_.Exception.Message
         }
     }
-    Add-ToCSV -filePath (Join-Path $outputDir "GPOLinks.csv") -data $gpoLinks
+}
+
+Add-ToCSV -filePath (Join-Path $outputDir "GPOLinks.csv") -data $gpoLinks
+Add-ToCSV -filePath (Join-Path $outputDir "GpoLinkErrors.csv") -data $gpoLinkErrors
 
     $forest = Get-ADForest
     $fsmoRoles = @()
