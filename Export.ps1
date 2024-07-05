@@ -84,24 +84,27 @@ foreach ($group in $groups) {
     $gpos = Get-GPO -All | Select-Object DisplayName, Id
     Add-ToCSV -filePath (Join-Path $outputDir "GPOs.csv") -data $gpos
 
-    # Fix for the problematic part: GPOLinks
+   # Fix for the problematic part: GPOLinks using Get-GPInheritance
 $gpoLinks = @()
 $gpoLinkErrors = @()
 
-foreach ($gpo in $gpos) {
+# Get all organizational units to check GPO links
+$organizationalUnits = Get-ADOrganizationalUnit -Filter * -Property DistinguishedName
+
+foreach ($ou in $organizationalUnits) {
     try {
-        $gpoReport = Get-GPOReport -Guid $gpo.Id -ReportType Xml
-        $xml = [xml]$gpoReport
-        $links = $xml.GPO.LinksTo | ForEach-Object {
-            [PSCustomObject]@{
+        $gpInheritance = Get-GPInheritance -Target $ou.DistinguishedName
+        foreach ($gpo in $gpInheritance.GpoLinks) {
+            $gpoLink = [PSCustomObject]@{
                 GpoName = $gpo.DisplayName
-                Link = $_.Target
+                Link = $ou.DistinguishedName
             }
+            $gpoLinks += $gpoLink
         }
-        $gpoLinks += $links
     } catch {
         $gpoLinkErrors += [PSCustomObject]@{
-            GpoName = $gpo.DisplayName
+            GpoName = "N/A"
+            Link = $ou.DistinguishedName
             Error = $_.Exception.Message
         }
     }
