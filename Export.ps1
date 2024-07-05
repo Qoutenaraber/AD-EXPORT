@@ -50,26 +50,25 @@ try {
     Add-ToCSV -filePath (Join-Path $outputDir "Groups.csv") -data $groups
 
     # Fix for the problematic part: Group Memberships and Errors
-    foreach ($group in $groups) {
-        try {
-            $members = Get-ADGroupMember -Identity $group -ErrorAction Stop
-            foreach ($member in $members) {
-                $membershipObject = [PSCustomObject]@{
-                    GroupName = $group.Name
-                    UserName = $member.SamAccountName
-                    MemberType = $member.objectClass
-                }
-                Add-ToCSV -filePath (Join-Path $outputDir "GroupMemberships.csv") -data @($membershipObject)
-            }
-        } catch {
-            $errorObject = [PSCustomObject]@{
+foreach ($group in $groups) {
+    try {
+        $members = Get-ADGroupMember -Identity $group.Name -ErrorAction Stop
+        foreach ($member in $members) {
+            $membershipObject = [PSCustomObject]@{
                 GroupName = $group.Name
-                Error = $_.Exception.Message
+                UserName = $member.SamAccountName
+                MemberType = $member.objectClass
             }
-            Add-ToCSV -filePath (Join-Path $outputDir "GroupMembershipErrors.csv") -data @($errorObject)
+            Add-ToCSV -filePath (Join-Path $outputDir "GroupMemberships.csv") -data @($membershipObject)
         }
+    } catch {
+        $errorObject = [PSCustomObject]@{
+            GroupName = $group.Name
+            Error = $_.Exception.Message
+        }
+        Add-ToCSV -filePath (Join-Path $outputDir "GroupMembershipErrors.csv") -data @($errorObject)
     }
-
+}
     $ous = Get-ADOrganizationalUnit -Filter * -Property Name, DistinguishedName | Select-Object Name, DistinguishedName
     Add-ToCSV -filePath (Join-Path $outputDir "OrganizationalUnits.csv") -data $ous
 
