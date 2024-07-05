@@ -49,23 +49,23 @@ try {
     $groups = Get-ADGroup -Filter * -Property Name, GroupScope, GroupCategory, Description | Select-Object Name, GroupScope, GroupCategory, Description
     Add-ToCSV -filePath (Join-Path $outputDir "Groups.csv") -data $groups
 
-    $groupMemberships = @()
-    $groupMembershipErrors = @()
-    foreach ($group in $groups) {
-        try {
-            $members = Get-ADGroupMember -Identity $group.Name -ErrorAction Stop | Select-Object @{Name='GroupName'; Expression={$group.Name}}, @{Name='UserName'; Expression={$_.SamAccountName}}, @{Name='MemberType'; Expression={$_.objectClass}}
-            $groupMemberships += $members
-        } catch {
-            $groupMembershipErrors += [PSCustomObject]@{GroupName=$group.Name; Error=$_.Exception.Message}
-        }
-    }
-    Add-ToCSV -filePath (Join-Path $outputDir "GroupMemberships.csv") -data $groupMemberships
-    Add-ToCSV -filePath (Join-Path $outputDir "GroupMembershipErrors.csv") -data $groupMembershipErrors
+   # $groupMemberships = @()
+  #  $groupMembershipErrors = @()
+    #foreach ($group in $groups) {
+        #try {
+         #   $members = Get-ADGroupMember -Identity $group.Name -ErrorAction Stop | Select-Object @{Name='GroupName'; Expression={$group.Name}}, @{Name='UserName'; Expression={$_.SamAccountName}}, @{Name='MemberType'; Expression={$_.objectClass}}
+           # $groupMemberships += $members
+       # } catch {
+            #$groupMembershipErrors += [PSCustomObject]@{GroupName=$group.Name; Error=$_.Exception.Message}
+    #    }
+ #   }
+    #Add-ToCSV -filePath (Join-Path $outputDir "GroupMemberships.csv") -data $groupMemberships
+    #Add-ToCSV -filePath (Join-Path $outputDir "GroupMembershipErrors.csv") -data $groupMembershipErrors
 
     $ous = Get-ADOrganizationalUnit -Filter * -Property Name, DistinguishedName | Select-Object Name, DistinguishedName
     Add-ToCSV -filePath (Join-Path $outputDir "OrganizationalUnits.csv") -data $ous
 
-    $dcs = Get-ADDomainController -Filter * -Property Name, Site, IPv4Address, OperatingSystem | Select-Object Name, Site, IPv4Address, OperatingSystem
+    $dcs = Get-ADDomainController -Filter * | Select-Object Name, Site, IPv4Address, OperatingSystem
     Add-ToCSV -filePath (Join-Path $outputDir "DomainControllers.csv") -data $dcs
 
     $sites = Get-ADReplicationSite -Filter * -Property Name | Select-Object Name
