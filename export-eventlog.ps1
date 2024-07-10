@@ -27,12 +27,12 @@ try {
 
     # XML-Abfrage, um die Protokolle der letzten 24 Stunden zu filtern
     $queryXml = @"
-    <QueryList>
-      <Query Id="0" Path="Security">
-        <Select Path="Security">*[System[TimeCreated[@SystemTime&gt;='$startTime']]]</Select>
-      </Query>
-    </QueryList>
-    "@
+<QueryList>
+  <Query Id="0" Path="Security">
+    <Select Path="Security">*[System[TimeCreated[@SystemTime&gt;='$startTime']]]</Select>
+  </Query>
+</QueryList>
+"@
 
     # Exportiere das gefilterte Sicherheitsprotokoll in eine Datei mit wevtutil
     $wevtutilCommand = "wevtutil qe Security /q:`"$queryXml`" /f:RenderedXml > C:\EventLogs\tempLog.xml"
