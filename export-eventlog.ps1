@@ -23,27 +23,17 @@ try {
     $logFilePath = Join-Path -Path $logFolder -ChildPath $logFileName
 
     # Definiere die Startzeit für die Filterung der Protokolle (letzte 24 Stunden)
-    $startTime = (Get-Date).AddDays(-1).ToString("yyyy-MM-ddTHH:mm:ss.fffffffK")
+    $startTime = (Get-Date).AddDays(-1)
 
-    # XML-Abfrage, um die Protokolle der letzten 24 Stunden zu filtern
-    $queryXml = @"
-<QueryList>
-  <Query Id='0' Path='Security'>
-    <Select Path='Security'>*[System[TimeCreated[@SystemTime>='$startTime']]]</Select>
-  </Query>
-</QueryList>
-"@
+    # Exportiere das gefilterte Sicherheitsprotokoll in eine Datei
+    $events = Get-WinEvent -FilterHashtable @{LogName='Security'; StartTime=$startTime}
+    $events | Export-Clixml -Path "C:\EventLogs\tempLog.xml"
 
-    # Exportiere das gefilterte Sicherheitsprotokoll in eine Datei mit wevtutil
-    $wevtutilCommand = "wevtutil qe Security /q:`"$queryXml`" /f:RenderedXml > C:\EventLogs\tempLog.xml"
-    Invoke-Expression $wevtutilCommand
-
-    # Konvertiere das gefilterte Protokoll in das .evtx-Format
-    $convertCommand = "wevtutil epl C:\EventLogs\tempLog.xml $logFilePath"
-    Invoke-Expression $convertCommand
+    # Konvertiere die XML-Protokolldatei in das .evtx-Format
+    wevtutil epl "C:\EventLogs\tempLog.xml" $logFilePath
 
     # Entferne die temporäre XML-Protokolldatei
-    Remove-Item C:\EventLogs\tempLog.xml
+    Remove-Item "C:\EventLogs\tempLog.xml"
 } catch {
     # Logge den Fehler in eine Datei
     $errorMessage = "[$((Get-Date).ToString())] Fehler: $($_.Exception.Message)"
