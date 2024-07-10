@@ -25,11 +25,13 @@ try {
     # Definiere die Startzeit für die Filterung der Protokolle (letzte 24 Stunden)
     $startTime = (Get-Date).AddDays(-1)
 
-    # Exportiere das gefilterte Sicherheitsprotokoll in eine Datei
+    # Hole die Sicherheitsprotokolle der letzten 24 Stunden
     $events = Get-WinEvent -FilterHashtable @{LogName='Security'; StartTime=$startTime}
-    $events | Export-Clixml -Path "C:\EventLogs\tempLog.xml"
 
-    # Konvertiere die XML-Protokolldatei in das .evtx-Format
+    # Exportiere die Protokolle in eine temporäre .evtx-Datei
+    $events | Out-File -FilePath "C:\EventLogs\tempLog.xml"
+
+    # Konvertiere die temporäre XML-Protokolldatei in das .evtx-Format
     wevtutil epl "C:\EventLogs\tempLog.xml" $logFilePath
 
     # Entferne die temporäre XML-Protokolldatei
