@@ -47,15 +47,6 @@ if ($dialogResult -eq [System.Windows.Forms.DialogResult]::OK) {
 
     # Notify the user that the extraction is complete and the file is opened
     [System.Windows.Forms.MessageBox]::Show("Extraction complete! The file is opened in Event Viewer.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
-
-    # Wait for the Event Viewer process to close
-    $eventViewerProcess = Get-Process -Name "eventvwr" -ErrorAction SilentlyContinue
-    if ($eventViewerProcess) {
-        $eventViewerProcess.WaitForExit()
-    }
-
-    # Delete the extracted file after Event Viewer is closed
-    Remove-Item -Path $extractedFile -Force
 } else {
     [System.Windows.Forms.MessageBox]::Show("No file selected.", "Information", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
 }
