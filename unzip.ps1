@@ -31,8 +31,31 @@ if ($dialogResult -eq [System.Windows.Forms.DialogResult]::OK) {
     # Execute the command
     Invoke-Expression $unpackCommand
 
-    # Notify the user that the extraction is complete
-    [System.Windows.Forms.MessageBox]::Show("Extraction complete!", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+    # Find the extracted file (assuming there's only one file extracted)
+    $extractedFiles = Get-ChildItem -Path $outputDirectory -Filter "*.evtx"
+    if ($extractedFiles.Count -eq 0) {
+        [System.Windows.Forms.MessageBox]::Show("No .evtx file found in the archive.", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        exit
+    } elseif ($extractedFiles.Count -gt 1) {
+        [System.Windows.Forms.MessageBox]::Show("Multiple .evtx files found. Only the first one will be opened.", "Warning", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+    }
+
+    $extractedFile = $extractedFiles[0].FullName
+
+    # Open the extracted file in Event Viewer
+    Start-Process -FilePath "eventvwr.exe" -ArgumentList "/c:$extractedFile"
+
+    # Notify the user that the extraction is complete and the file is opened
+    [System.Windows.Forms.MessageBox]::Show("Extraction complete! The file is opened in Event Viewer.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+
+    # Wait for the Event Viewer process to close
+    $eventViewerProcess = Get-Process -Name "eventvwr" -ErrorAction SilentlyContinue
+    if ($eventViewerProcess) {
+        $eventViewerProcess.WaitForExit()
+    }
+
+    # Delete the extracted file after Event Viewer is closed
+    Remove-Item -Path $extractedFile -Force
 } else {
     [System.Windows.Forms.MessageBox]::Show("No file selected.", "Information", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
 }
