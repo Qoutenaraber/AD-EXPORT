@@ -1,0 +1,71 @@
+Sub ImportCSVToVisio()
+    Dim visApp As Visio.Application
+    Dim visDoc As Visio.Document
+    Dim visPage As Visio.Page
+    Dim visShape As Visio.Shape
+    Dim dataFile As String
+    Dim fileNum As Integer
+    Dim lineData As String
+    Dim rowData() As String
+    Dim i As Integer
+    Dim shapeX As Double
+    Dim shapeY As Double
+    
+    ' Initialize Visio Application and Document
+    Set visApp = New Visio.Application
+    Set visDoc = visApp.Documents.Add("")
+    Set visPage = visDoc.Pages(1)
+    
+    ' CSV File Path
+    dataFile = "C:\path\to\your\file.csv"
+    
+    ' Open the CSV file
+    fileNum = FreeFile
+    Open dataFile For Input As #fileNum
+    
+    ' Set initial position for shapes
+    shapeX = 1
+    shapeY = 10
+    
+    ' Read each line from the CSV file
+    Do While Not EOF(fileNum)
+        Line Input #fileNum, lineData
+        rowData = Split(lineData, ",")
+        
+        ' Determine the shape type based on the second column value (assuming second column defines the shape type)
+        Select Case rowData(1)
+            Case "Rectangle"
+                ' Create a rectangle shape
+                Set visShape = visPage.DrawRectangle(shapeX, shapeY, shapeX + 2, shapeY - 1)
+            Case "Circle"
+                ' Create a circle shape
+                Set visShape = visPage.DrawOval(shapeX, shapeY, shapeX + 2, shapeY - 2)
+            Case "Triangle"
+                ' Create a triangle shape using DrawPolyline
+                Dim vertices(1 To 4, 1 To 2) As Double
+                vertices(1, 1) = shapeX: vertices(1, 2) = shapeY
+                vertices(2, 1) = shapeX + 2: vertices(2, 2) = shapeY
+                vertices(3, 1) = shapeX + 1: vertices(3, 2) = shapeY - 2
+                vertices(4, 1) = shapeX: vertices(4, 2) = shapeY
+                Set visShape = visPage.DrawPolyline(vertices, visPolyline1D)
+            Case Else
+                ' Default shape if no type is specified
+                Set visShape = visPage.DrawRectangle(shapeX, shapeY, shapeX + 2, shapeY - 1)
+        End Select
+        
+        ' Add text to the shape (assuming first column is the text)
+        visShape.Text = rowData(0)
+        
+        ' Update position for the next shape
+        shapeY = shapeY - 3
+        
+        ' Reset Y position and update X position after certain number of shapes
+        If shapeY < 2 Then
+            shapeY = 10
+            shapeX = shapeX + 3
+        End If
+    Loop
+    
+    ' Close the CSV file
+    Close #fileNum
+End Sub
