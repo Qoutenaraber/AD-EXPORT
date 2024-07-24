@@ -1,0 +1,53 @@
+Sub ImportCSVToVisio()
+    Dim visApp As Visio.Application
+    Dim visDoc As Visio.Document
+    Dim visPage As Visio.Page
+    Dim visShape As Visio.Shape
+    Dim dataFile As String
+    Dim fileNum As Integer
+    Dim lineData As String
+    Dim rowData() As String
+    Dim i As Integer
+    Dim shapeX As Double
+    Dim shapeY As Double
+    
+    ' Initialize Visio Application and Document
+    Set visApp = New Visio.Application
+    Set visDoc = visApp.Documents.Add("")
+    Set visPage = visDoc.Pages(1)
+    
+    ' CSV File Path
+    dataFile = "C:\path\to\your\file.csv"
+    
+    ' Open the CSV file
+    fileNum = FreeFile
+    Open dataFile For Input As #fileNum
+    
+    ' Set initial position for shapes
+    shapeX = 1
+    shapeY = 10
+    
+    ' Read each line from the CSV file
+    Do While Not EOF(fileNum)
+        Line Input #fileNum, lineData
+        rowData = Split(lineData, ",")
+        
+        ' Create a rectangle shape for each data row
+        Set visShape = visPage.DrawRectangle(shapeX, shapeY, shapeX + 2, shapeY - 1)
+        
+        ' Add text to the shape (assuming first column is the text)
+        visShape.Text = rowData(0)
+        
+        ' Update position for the next shape
+        shapeY = shapeY - 2
+        
+        ' Reset Y position and update X position after certain number of shapes
+        If shapeY < 2 Then
+            shapeY = 10
+            shapeX = shapeX + 3
+        End If
+    Loop
+    
+    ' Close the CSV file
+    Close #fileNum
+End Sub
