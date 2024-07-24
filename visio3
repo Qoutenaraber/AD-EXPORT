@@ -1,58 +1,60 @@
-' Open Visio and create a new document
-Dim visioApp As Object
-Set visioApp = CreateObject("Visio.Application")
-Dim visioDoc As Object
-Set visioDoc = visioApp.Documents.Add("")
-
-' Read the CSV file
-Dim csvFile As String
-csvFile = "C:\path\to\your\file.csv"
-
-Dim fso As Object
-Set fso = CreateObject("Scripting.FileSystemObject")
-Dim file As Object
-Set file = fso.OpenTextFile(csvFile, 1)
-
-' Skip the header line
-Dim headerLine As String
-headerLine = file.ReadLine()
-
-' Create a dictionary to store the shapes
-Dim shapesDict As Object
-Set shapesDict = CreateObject("Scripting.Dictionary")
-
-' Read the CSV file and create shapes
-Do Until file.AtEndOfStream
-    Dim line As String
-    line = file.ReadLine()
-    Dim parts() As String
-    parts = Split(line, ",")
+Sub ImportCSVAndCreateOrgChart()
+    ' Define file path to the CSV file
+    Dim csvFilePath As String
+    csvFilePath = "C:\path\to\your\file.csv"
     
-    Dim name As String
-    name = parts(0)
-    Dim distinguishedName As String
-    distinguishedName = parts(1)
+    ' Open the CSV file for reading
+    Dim fso As Object
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    Dim file As Object
+    Set file = fso.OpenTextFile(csvFilePath, 1)
     
-    ' Create a new shape for each organizational unit
-    Dim visioShape As Object
-    Set visioShape = visioDoc.Pages(1).Drop(visioApp.Documents.Item("Basic Shapes.vss").Masters.ItemU("Rectangle"), 4.25, 5.5)
-    visioShape.Text = name
-    shapesDict.Add distinguishedName, visioShape
-Loop
-file.Close()
-
-' Connect shapes based on DistinguishedName
-Dim key As Variant
-For Each key In shapesDict.Keys
-    Dim parentDn As String
-    parentDn = GetParentDN(key)
+    ' Read the header line
+    Dim headerLine As String
+    headerLine = file.ReadLine()
     
-    If shapesDict.Exists(parentDn) Then
-        visioDoc.Pages(1).DropConnected shapesDict(key), shapesDict(parentDn), visioApp.Documents.Item("Basic Shapes.vss").Masters.ItemU("Dynamic Connector")
-    End If
-Next key
+    ' Create a dictionary to store the shapes
+    Dim shapesDict As Object
+    Set shapesDict = CreateObject("Scripting.Dictionary")
+    
+    ' Open a new Visio document
+    Dim visioApp As Visio.Application
+    Set visioApp = CreateObject("Visio.Application")
+    Dim visioDoc As Visio.Document
+    Set visioDoc = visioApp.Documents.Add("")
+    
+    ' Read the CSV file and create shapes
+    Do Until file.AtEndOfStream
+        Dim line As String
+        line = file.ReadLine()
+        Dim parts() As String
+        parts = Split(line, ",")
+        
+        Dim name As String
+        name = parts(0)
+        Dim distinguishedName As String
+        distinguishedName = parts(1)
+        
+        ' Create a new shape for each organizational unit
+        Dim visioShape As Visio.Shape
+        Set visioShape = visioDoc.Pages(1).Drop(visioApp.Documents.Item("Basic Shapes.vss").Masters.ItemU("Rectangle"), 4.25, 5.5)
+        visioShape.Text = name
+        shapesDict.Add distinguishedName, visioShape
+    Loop
+    file.Close()
+    
+    ' Connect shapes based on DistinguishedName
+    Dim key As Variant
+    For Each key In shapesDict.Keys
+        Dim parentDn As String
+        parentDn = GetParentDN(key)
+        
+        If shapesDict.Exists(parentDn) Then
+            visioDoc.Pages(1).DropConnected shapesDict(key), shapesDict(parentDn), visioApp.Documents.Item("Basic Shapes.vss").Masters.ItemU("Dynamic Connector")
+        End If
+    Next key
+End Sub
 
-' Function to get the parent DistinguishedName
 Function GetParentDN(dn As String) As String
     Dim parts() As String
     parts = Split(dn, ",")
