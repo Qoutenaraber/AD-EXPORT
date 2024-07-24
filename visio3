@@ -1,29 +1,26 @@
 Sub ImportCSVAndCreateOrgChart()
-    ' Define file path to the CSV file
     Dim csvFilePath As String
     csvFilePath = "C:\path\to\your\file.csv"
     
-    ' Open the CSV file for reading
     Dim fso As Object
     Set fso = CreateObject("Scripting.FileSystemObject")
     Dim file As Object
     Set file = fso.OpenTextFile(csvFilePath, 1)
     
-    ' Read the header line
     Dim headerLine As String
     headerLine = file.ReadLine()
     
-    ' Create a dictionary to store the shapes
     Dim shapesDict As Object
     Set shapesDict = CreateObject("Scripting.Dictionary")
     
-    ' Open a new Visio document
     Dim visioApp As Visio.Application
     Set visioApp = CreateObject("Visio.Application")
     Dim visioDoc As Visio.Document
     Set visioDoc = visioApp.Documents.Add("")
     
-    ' Read the CSV file and create shapes
+    Dim masterShape As Visio.Master
+    Set masterShape = visioApp.Documents("Basic Shapes.vss").Masters("Rectangle")
+    
     Do Until file.AtEndOfStream
         Dim line As String
         line = file.ReadLine()
@@ -35,22 +32,28 @@ Sub ImportCSVAndCreateOrgChart()
         Dim distinguishedName As String
         distinguishedName = parts(1)
         
-        ' Create a new shape for each organizational unit
         Dim visioShape As Visio.Shape
-        Set visioShape = visioDoc.Pages(1).Drop(visioApp.Documents.Item("Basic Shapes.vss").Masters.ItemU("Rectangle"), 4.25, 5.5)
+        Set visioShape = visioDoc.Pages(1).Drop(masterShape, 4.25, 5.5)
         visioShape.Text = name
         shapesDict.Add distinguishedName, visioShape
     Loop
-    file.Close()
+    file.Close
     
-    ' Connect shapes based on DistinguishedName
     Dim key As Variant
     For Each key In shapesDict.Keys
         Dim parentDn As String
         parentDn = GetParentDN(key)
         
         If shapesDict.Exists(parentDn) Then
-            visioDoc.Pages(1).DropConnected shapesDict(key), shapesDict(parentDn), visioApp.Documents.Item("Basic Shapes.vss").Masters.ItemU("Dynamic Connector")
+            Dim childShape As Visio.Shape
+            Dim parentShape As Visio.Shape
+            Set childShape = shapesDict(key)
+            Set parentShape = shapesDict(parentDn)
+            
+            Dim connector As Visio.Shape
+            Set connector = visioDoc.Pages(1).Drop(visioApp.Documents("Basic Shapes.vss").Masters("Dynamic Connector"), 0, 0)
+            connector.Cells("BeginX").GlueTo parentShape.Cells("PinX")
+            connector.Cells("EndX").GlueTo childShape.Cells("PinX")
         End If
     Next key
 End Sub
