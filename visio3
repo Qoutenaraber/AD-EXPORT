@@ -45,7 +45,7 @@ Sub ImportCSVToVisio()
     Dim key As Variant
     For Each key In shapeDict.Keys
         Dim parentDn As String
-        parentDn = GetParentDN(key)
+        parentDn = GetParentDN(CStr(key))
         
         If shapeDict.Exists(parentDn) Then
             Dim childShape As Visio.Shape
@@ -61,7 +61,7 @@ Sub ImportCSVToVisio()
     Next key
 End Sub
 
-Function GetParentDN(dn As String) As String
+Function GetParentDN(ByVal dn As String) As String
     Dim parts() As String
     parts = Split(dn, ",")
     If UBound(parts) > 0 Then
