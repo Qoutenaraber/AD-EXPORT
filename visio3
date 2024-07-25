@@ -3,7 +3,6 @@ Sub ImportCSVToVisio()
     Dim visDoc As Visio.Document
     Dim visPage As Visio.Page
     Dim visShape As Visio.Shape
-    Dim visStencil As Visio.Document
     Dim dataFile As String
     Dim fileNum As Integer
     Dim lineData As String
@@ -19,17 +18,8 @@ Sub ImportCSVToVisio()
     Set visDoc = visApp.Documents.Add("")
     Set visPage = visDoc.Pages(1)
     
-    ' Ensure that the "Basic Shapes" stencil is opened
-    On Error Resume Next
-    Set visStencil = visApp.Documents.OpenEx("Schablone für Grundformen.vss", visOpenDocked) ' Adjusted for German Visio
-    If visStencil Is Nothing Then
-        MsgBox "Error: Unable to open Basic Shapes stencil.", vbCritical
-        Exit Sub
-    End If
-    On Error GoTo 0
-    
     ' Leave dataFile empty for you to fill later
-    dataFile = "C:\path\to\your\file.csv"
+    dataFile = "C:\path\to\your\file.csv" ' Replace with your actual path
     
     If dataFile = "" Then
         MsgBox "Error: Data file path is empty.", vbCritical
@@ -47,12 +37,7 @@ Sub ImportCSVToVisio()
         rowData = Split(lineData, ",")
         
         If Not shapeDict.Exists(rowData(1)) Then
-            Set visShape = visPage.Drop(visStencil.Masters("Rechteck"), shapeX, shapeY) ' Adjusted for German Visio
-            If visShape Is Nothing Then
-                MsgBox "Error: Unable to find Rectangle master shape.", vbCritical
-                Close #fileNum
-                Exit Sub
-            End If
+            Set visShape = visPage.DrawRectangle(shapeX, shapeY, shapeX + 2, shapeY - 1)
             visShape.Text = rowData(0)
             shapeDict.Add rowData(1), visShape
         End If
@@ -77,11 +62,7 @@ Sub ImportCSVToVisio()
             Set childShape = shapeDict(key)
             Set parentShape = shapeDict(parentDn)
             
-            Set connector = visPage.Drop(visStencil.Masters("Dynamischer Verbinder"), 0, 0) ' Adjusted for German Visio
-            If connector Is Nothing Then
-                MsgBox "Error: Unable to find Dynamic Connector master shape.", vbCritical
-                Exit Sub
-            End If
+            Set connector = visPage.DrawLine(0, 0, 2, 2)
             connector.Cells("BeginX").GlueTo parentShape.Cells("PinX")
             connector.Cells("EndX").GlueTo childShape.Cells("PinX")
         End If
