@@ -29,9 +29,11 @@ Sub ImportCSVToVisio()
         Line Input #fileNum, lineData
         rowData = Split(lineData, ",")
         
-        Set visShape = visPage.DrawRectangle(shapeX, shapeY, shapeX + 2, shapeY - 1)
-        visShape.Text = rowData(0)
-        shapeDict.Add rowData(1), visShape
+        If Not shapeDict.Exists(rowData(1)) Then
+            Set visShape = visPage.DrawRectangle(shapeX, shapeY, shapeX + 2, shapeY - 1)
+            visShape.Text = rowData(0)
+            shapeDict.Add rowData(1), visShape
+        End If
         
         shapeY = shapeY - 3
         If shapeY < 2 Then
