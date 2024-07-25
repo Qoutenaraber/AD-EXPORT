@@ -11,6 +11,7 @@ Sub ImportCSVToVisio()
     Dim shapeDict As Object
     Dim shapeX As Double
     Dim shapeY As Double
+    Dim connector As Visio.Shape
     
     Set shapeDict = CreateObject("Scripting.Dictionary")
     
@@ -19,9 +20,21 @@ Sub ImportCSVToVisio()
     Set visPage = visDoc.Pages(1)
     
     ' Ensure that the "Basic Shapes" stencil is opened
+    On Error Resume Next
     Set visStencil = visApp.Documents.OpenEx("Basic Shapes.vss", visOpenDocked)
+    If visStencil Is Nothing Then
+        MsgBox "Error: Unable to open Basic Shapes stencil.", vbCritical
+        Exit Sub
+    End If
+    On Error GoTo 0
     
-    dataFile =
+    ' Leave dataFile empty for you to fill later
+    dataFile = ""
+    
+    If dataFile = "" Then
+        MsgBox "Error: Data file path is empty.", vbCritical
+        Exit Sub
+    End If
     
     fileNum = FreeFile
     Open dataFile For Input As #fileNum
@@ -34,7 +47,14 @@ Sub ImportCSVToVisio()
         rowData = Split(lineData, ",")
         
         If Not shapeDict.Exists(rowData(1)) Then
+            On Error Resume Next
             Set visShape = visPage.Drop(visStencil.Masters("Rectangle"), shapeX, shapeY)
+            If visShape Is Nothing Then
+                MsgBox "Error: Unable to find Rectangle master shape.", vbCritical
+                Close #fileNum
+                Exit Sub
+            End If
+            On Error GoTo 0
             visShape.Text = rowData(0)
             shapeDict.Add rowData(1), visShape
         End If
@@ -59,8 +79,13 @@ Sub ImportCSVToVisio()
             Set childShape = shapeDict(key)
             Set parentShape = shapeDict(parentDn)
             
-            Dim connector As Visio.Shape
+            On Error Resume Next
             Set connector = visPage.Drop(visStencil.Masters("Dynamic Connector"), 0, 0)
+            If connector Is Nothing Then
+                MsgBox "Error: Unable to find Dynamic Connector master shape.", vbCritical
+                Exit Sub
+            End If
+            On Error GoTo 0
             connector.Cells("BeginX").GlueTo parentShape.Cells("PinX")
             connector.Cells("EndX").GlueTo childShape.Cells("PinX")
         End If
