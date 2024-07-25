@@ -8,7 +8,6 @@ Sub ImportCSVToVisio()
     Dim lineData As String
     Dim rowData() As String
     Dim shapeDict As Object
-    Dim i As Integer
     Dim shapeX As Double
     Dim shapeY As Double
     
