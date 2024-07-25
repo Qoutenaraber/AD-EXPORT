@@ -3,6 +3,7 @@ Sub ImportCSVToVisio()
     Dim visDoc As Visio.Document
     Dim visPage As Visio.Page
     Dim visShape As Visio.Shape
+    Dim visStencil As Visio.Document
     Dim dataFile As String
     Dim fileNum As Integer
     Dim lineData As String
@@ -17,7 +18,10 @@ Sub ImportCSVToVisio()
     Set visDoc = visApp.Documents.Add("")
     Set visPage = visDoc.Pages(1)
     
-    dataFile = "C:\path\to\your\file.csv"
+    ' Ensure that the "Basic Shapes" stencil is opened
+    Set visStencil = visApp.Documents.OpenEx("Basic Shapes.vss", visOpenDocked)
+    
+    dataFile =
     
     fileNum = FreeFile
     Open dataFile For Input As #fileNum
@@ -30,7 +34,7 @@ Sub ImportCSVToVisio()
         rowData = Split(lineData, ",")
         
         If Not shapeDict.Exists(rowData(1)) Then
-            Set visShape = visPage.DrawRectangle(shapeX, shapeY, shapeX + 2, shapeY - 1)
+            Set visShape = visPage.Drop(visStencil.Masters("Rectangle"), shapeX, shapeY)
             visShape.Text = rowData(0)
             shapeDict.Add rowData(1), visShape
         End If
@@ -56,7 +60,7 @@ Sub ImportCSVToVisio()
             Set parentShape = shapeDict(parentDn)
             
             Dim connector As Visio.Shape
-            Set connector = visPage.Drop(visApp.Documents("Basic Shapes.vss").Masters("Dynamic Connector"), 0, 0)
+            Set connector = visPage.Drop(visStencil.Masters("Dynamic Connector"), 0, 0)
             connector.Cells("BeginX").GlueTo parentShape.Cells("PinX")
             connector.Cells("EndX").GlueTo childShape.Cells("PinX")
         End If
