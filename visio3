@@ -62,9 +62,10 @@ Sub ImportCSVToVisio()
             Set childShape = shapeDict(key)
             Set parentShape = shapeDict(parentDn)
             
-            Set connector = visPage.DrawLine(0, 0, 2, 2)
-            connector.Cells("BeginX").GlueTo parentShape.Cells("PinX")
-            connector.Cells("EndX").GlueTo childShape.Cells("PinX")
+            ' Create a connector and connect the shapes
+            Set connector = visPage.Drop(visDoc.Masters("Dynamic Connector"), 0, 0)
+            connector.CellsU("BeginX").GlueTo parentShape.CellsU("PinX")
+            connector.CellsU("EndX").GlueTo childShape.CellsU("PinX")
         End If
     Next key
 End Sub
