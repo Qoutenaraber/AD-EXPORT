@@ -1,0 +1,50 @@
+# Pfad zu 7zip
+$sevenZipPath = "C:\Program Files\7-Zip\7z.exe"
+
+# Verzeichnis, in dem die sortierten Logs gespeichert sind
+$targetDir = "C:\Logs\Sorted"
+
+# Hole das heutige Datum
+$currentDate = Get-Date
+$currentYear = $currentDate.ToString("yyyy")
+$currentMonth = $currentDate.ToString("MM")
+
+# Hole alle Jahresordner im Zielverzeichnis
+$yearFolders = Get-ChildItem -Path $targetDir -Directory
+
+foreach ($yearFolder in $yearFolders) {
+    # Hole das Jahr aus dem Ordnernamen
+    $year = $yearFolder.Name
+
+    # Hole alle Monatsordner für das Jahr
+    $monthFolders = Get-ChildItem -Path $yearFolder.FullName -Directory
+
+    foreach ($monthFolder in $monthFolders) {
+        $month = $monthFolder.Name
+
+        # Überspringe den aktuellen Monat
+        if ($year -eq $currentYear -and $month -eq $currentMonth) {
+            continue
+        }
+
+        # Pfad zur Ziel-Archivdatei (z.B. 2023-08.7z)
+        $zipFileName = "$year-$month.7z"
+        $zipFilePath = Join-Path $targetDir -ChildPath $zipFileName
+
+        # Prüfe, ob das Archiv bereits existiert, um Duplikate zu vermeiden
+        if (-not (Test-Path $zipFilePath)) {
+            # Komprimiere den Inhalt des Monatsordners
+            $arguments = "a -t7z `"$zipFilePath`" `"$monthFolder.FullName\*`""
+            Start-Process -FilePath $sevenZipPath -ArgumentList $arguments -Wait
+
+            # Überprüfe, ob die Komprimierung erfolgreich war
+            if (Test-Path $zipFilePath) {
+                Write-Output "Der Inhalt von $monthFolder wurde erfolgreich komprimiert."
+            } else {
+                Write-Output "Fehler: Die Komprimierung von $monthFolder ist fehlgeschlagen."
+            }
+        } else {
+            Write-Output "Das Archiv für den Monat $year-$month existiert bereits."
+        }
+    }
+}
