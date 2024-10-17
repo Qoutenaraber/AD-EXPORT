@@ -16,7 +16,9 @@ if (-not (Test-Path $yearDir)) {
 
 # Erstelle alle Monatsverzeichnisse (01 bis 12)
 for ($month = 1; $month -le 12; $month++) {
-    $monthDir = Join-Path $yearDir -ChildPath "{0:D2}" -f $month
+    # Monat als zweistellige Zahl formatieren (z.B. 01, 02, ..., 12)
+    $formattedMonth = "{0:D2}" -f $month
+    $monthDir = Join-Path $yearDir -ChildPath $formattedMonth
 
     # Überprüfe, ob der Monatsordner existiert, und erstelle ihn falls nicht
     if (-not (Test-Path $monthDir)) {
