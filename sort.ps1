@@ -6,16 +6,22 @@ $targetDir = "C:\Logs\Sorted"
 # Hole das heutige Datum
 $currentDate = Get-Date
 
-# Erstelle das Verzeichnis für das aktuelle Jahr (yyyy) und den Monat (MM als Zahl)
+# Erstelle das Verzeichnis für das aktuelle Jahr (yyyy)
 $yearDir = Join-Path $targetDir $currentDate.ToString("yyyy")
-$monthDir = Join-Path $yearDir $currentDate.ToString("MM")
 
-# Erstelle die Verzeichnisse, falls sie nicht existieren
+# Erstelle das Verzeichnis für das Jahr, falls es nicht existiert
 if (-not (Test-Path $yearDir)) {
     New-Item -Path $yearDir -ItemType Directory
 }
-if (-not (Test-Path $monthDir)) {
-    New-Item -Path $monthDir -ItemType Directory
+
+# Erstelle alle Monatsverzeichnisse (01 bis 12)
+for ($month = 1; $month -le 12; $month++) {
+    $monthDir = Join-Path $yearDir -ChildPath "{0:D2}" -f $month
+
+    # Überprüfe, ob der Monatsordner existiert, und erstelle ihn falls nicht
+    if (-not (Test-Path $monthDir)) {
+        New-Item -Path $monthDir -ItemType Directory
+    }
 }
 
 # Hole alle .7z-Dateien aus dem Quellverzeichnis, die dem Muster dd-MM-yyyy_Security.7z entsprechen
@@ -29,6 +35,14 @@ $files = Get-ChildItem -Path $sourceDir -Filter "*_Security.7z" | Where-Object {
 
 # Verschiebe jede Datei in den entsprechenden Monatsordner
 foreach ($file in $files) {
-    $destinationPath = Join-Path $monthDir $file.Name
+    $fileDate = [datetime]::ParseExact($file.Name.Substring(0, 10), "dd-MM-yyyy", $null)
+    $fileYear = $fileDate.ToString("yyyy")
+    $fileMonth = $fileDate.ToString("MM")
+
+    # Bestimme das Zielverzeichnis für die Datei (basierend auf dem Jahr und Monat)
+    $destinationDir = Join-Path $targetDir -ChildPath "$fileYear\$fileMonth"
+    
+    # Verschiebe die Datei in das entsprechende Monatsverzeichnis
+    $destinationPath = Join-Path $destinationDir $file.Name
     Move-Item -Path $file.FullName -Destination $destinationPath
 }
