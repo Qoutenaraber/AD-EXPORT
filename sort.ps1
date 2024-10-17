@@ -30,21 +30,34 @@ for ($month = 1; $month -le 12; $month++) {
 $files = Get-ChildItem -Path $sourceDir -Filter "*_Security.7z" | Where-Object {
     # Überprüfe, ob der Dateiname dem Muster dd-MM-yyyy_Security.7z entspricht
     if ($_ -match "^(\d{2})-(\d{2})-(\d{4})_Security.7z$") {
-        $fileDate = [datetime]::ParseExact($matches[0], "dd-MM-yyyy_Security.7z", $null)
-        return $fileDate -ge (Get-Date).AddDays(-1)
+        return $true
+    } else {
+        return $false
     }
 }
 
 # Verschiebe jede Datei in den entsprechenden Monatsordner
 foreach ($file in $files) {
-    $fileDate = [datetime]::ParseExact($file.Name.Substring(0, 10), "dd-MM-yyyy", $null)
-    $fileYear = $fileDate.ToString("yyyy")
-    $fileMonth = $fileDate.ToString("MM")
+    # Extrahiere das Datum aus dem Dateinamen mit Regex
+    if ($file.Name -match "^(\d{2})-(\d{2})-(\d{4})_Security.7z$") {
+        # Extrahiere Tag, Monat und Jahr aus dem Dateinamen
+        $day = $matches[1]
+        $month = $matches[2]
+        $year = $matches[3]
 
-    # Bestimme das Zielverzeichnis für die Datei (basierend auf dem Jahr und Monat)
-    $destinationDir = Join-Path $targetDir -ChildPath "$fileYear\$fileMonth"
-    
-    # Verschiebe die Datei in das entsprechende Monatsverzeichnis
-    $destinationPath = Join-Path $destinationDir $file.Name
-    Move-Item -Path $file.FullName -Destination $destinationPath
+        # Erstelle ein Datumsobjekt aus den extrahierten Teilen
+        $fileDate = [datetime]::ParseExact("$day-$month-$year", "dd-MM-yyyy", $null)
+        
+        # Bestimme das Zielverzeichnis für die Datei (basierend auf dem Jahr und Monat)
+        $destinationDir = Join-Path $targetDir -ChildPath "$year\$month"
+
+        # Erstelle das Zielverzeichnis, falls es nicht existiert
+        if (-not (Test-Path $destinationDir)) {
+            New-Item -Path $destinationDir -ItemType Directory
+        }
+
+        # Verschiebe die Datei in das entsprechende Monatsverzeichnis
+        $destinationPath = Join-Path $destinationDir $file.Name
+        Move-Item -Path $file.FullName -Destination $destinationPath
+    }
 }
