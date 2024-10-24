@@ -9,11 +9,23 @@ $deletedObjects = [ADSI]$deletedObjectsDn
 # Step 3: Get the current ACL (Access Control List) for the Deleted Objects container
 $acl = $deletedObjects.psbase.ObjectSecurity
 
-# Step 4: Create a new access rule for the gMSA to grant ReadProperty (read access)
+# Step 4: Create a new access rule for the gMSA to grant ReadProperty and ListContents
 $identity = New-Object System.Security.Principal.NTAccount($gMSA)
-$permission = [System.DirectoryServices.ActiveDirectoryRights]::ReadProperty
-$inheritance = [System.DirectoryServices.ActiveDirectorySecurityInheritance]::None
-$accessRule = New-Object System.DirectoryServices.ActiveDirectoryAccessRule($identity, $permission, "Allow", $inheritance)
+
+# Combine ReadProperty and ListContents permissions
+$permission = [System.DirectoryServices.ActiveDirectoryRights]::ReadProperty -bor `
+              [System.DirectoryServices.ActiveDirectoryRights]::ListContents
+
+# Inheritance to apply permissions to all child objects
+$inheritance = [System.DirectoryServices.ActiveDirectorySecurityInheritance]::All
+
+# Create the access rule
+$accessRule = New-Object System.DirectoryServices.ActiveDirectoryAccessRule(
+    $identity, 
+    $permission, 
+    "Allow", 
+    $inheritance
+)
 
 # Step 5: Add the new access rule to the current ACL
 $acl.AddAccessRule($accessRule)
