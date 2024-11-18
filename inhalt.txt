@@ -1,0 +1,53 @@
+Inhaltsverzeichnis
+
+	1.	Einleitung
+1.1 Ziel und Zweck des Dokuments
+1.2 Anwendungsbereich
+1.3 Zielgruppe
+	2.	Übersicht der aktuellen IT-Infrastruktur
+2.1 Allgemeine Beschreibung der IT-Umgebung
+2.2 Rolle von Active Directory in der Organisation
+	3.	Organisationsstruktur und Domänenmodell
+3.1 Domänenstruktur (Forest, Trees, Subdomains)
+3.2 Organisationseinheiten (OUs)
+3.3 Vertrauensstellungen
+	4.	Benutzer- und Gruppenverwaltung
+4.1 Benutzerkonten (Anzahl, Berechtigungsstufen)
+4.2 Gruppenstruktur (Sicherheits- und Verteilergruppen)
+4.3 Namenskonventionen und Richtlinien
+	5.	Richtlinien und Sicherheitskonzepte
+5.1 Gruppenrichtlinienobjekte (GPOs)
+5.2 Passwort- und Kontorichtlinien
+5.3 Sicherheitsrollen und Berechtigungen
+	6.	Replikation und Standorte
+6.1 Standorte und Standortverknüpfungen
+6.2 Replikationsstrategie
+6.3 Bandbreitennutzung und Replikationspläne
+	7.	Authentifizierungs- und Autorisierungsmethoden
+7.1 Kerberos- und NTLM-Protokolle
+7.2 Single Sign-On (SSO)
+7.3 Multifaktor-Authentifizierung
+	8.	Backup und Wiederherstellung
+8.1 Backup-Strategie für Active Directory
+8.2 Wiederherstellungsszenarien (z. B. AD-Recycling, Forest Recovery)
+8.3 Test der Backup- und Wiederherstellungsprozesse
+	9.	Monitoring und Protokollierung
+9.1 Überwachung von Active Directory
+9.2 Ereignisprotokolle und Audit-Trails
+9.3 Tools zur Überwachung
+	10.	Verwendete Technologien und Tools
+10.1 Übersicht der eingesetzten Software und Tools
+10.2 Drittanbieter-Tools für Verwaltung und Erweiterungen
+10.3 Schnittstellen zu anderen Systemen
+	11.	Herausforderungen und Schwachstellen
+11.1 Aktuelle Probleme in der Umgebung
+11.2 Risiken und Schwachstellen in der Konfiguration
+11.3 Sicherheitslücken und Optimierungspotenzial
+	12.	Zusammenfassung und Empfehlungen
+12.1 Zusammenfassung des Ist-Zustands
+12.2 Erste Empfehlungen zur Optimierung
+12.3 Nächste Schritte
+	13.	Anhang
+13.1 Glossar
+13.2 Abkürzungen
+13.3 Referenzen und Dokumente
