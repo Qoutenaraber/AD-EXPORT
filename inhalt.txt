@@ -1,53 +1,79 @@
 Inhaltsverzeichnis
 
-	1.	Einleitung
+1. Einleitung
+
 1.1 Ziel und Zweck des Dokuments
 1.2 Anwendungsbereich
 1.3 Zielgruppe
-	2.	Übersicht der aktuellen IT-Infrastruktur
-2.1 Allgemeine Beschreibung der IT-Umgebung
-2.2 Rolle von Active Directory in der Organisation
-	3.	Organisationsstruktur und Domänenmodell
+
+2. Übersicht der aktuellen IT-Infrastruktur
+
+2.1 Beschreibung der zentralen IT-Umgebung des StBA
+2.2 Rolle und Bedeutung von Active Directory im StBA-Kontext
+
+3. Organisationsstruktur und Domänenmodell
+
 3.1 Domänenstruktur (Forest, Trees, Subdomains)
-3.2 Organisationseinheiten (OUs)
-3.3 Vertrauensstellungen
-	4.	Benutzer- und Gruppenverwaltung
-4.1 Benutzerkonten (Anzahl, Berechtigungsstufen)
-4.2 Gruppenstruktur (Sicherheits- und Verteilergruppen)
-4.3 Namenskonventionen und Richtlinien
-	5.	Richtlinien und Sicherheitskonzepte
-5.1 Gruppenrichtlinienobjekte (GPOs)
-5.2 Passwort- und Kontorichtlinien
-5.3 Sicherheitsrollen und Berechtigungen
-	6.	Replikation und Standorte
-6.1 Standorte und Standortverknüpfungen
-6.2 Replikationsstrategie
-6.3 Bandbreitennutzung und Replikationspläne
-	7.	Authentifizierungs- und Autorisierungsmethoden
-7.1 Kerberos- und NTLM-Protokolle
-7.2 Single Sign-On (SSO)
-7.3 Multifaktor-Authentifizierung
-	8.	Backup und Wiederherstellung
-8.1 Backup-Strategie für Active Directory
-8.2 Wiederherstellungsszenarien (z. B. AD-Recycling, Forest Recovery)
-8.3 Test der Backup- und Wiederherstellungsprozesse
-	9.	Monitoring und Protokollierung
-9.1 Überwachung von Active Directory
-9.2 Ereignisprotokolle und Audit-Trails
-9.3 Tools zur Überwachung
-	10.	Verwendete Technologien und Tools
-10.1 Übersicht der eingesetzten Software und Tools
-10.2 Drittanbieter-Tools für Verwaltung und Erweiterungen
-10.3 Schnittstellen zu anderen Systemen
-	11.	Herausforderungen und Schwachstellen
-11.1 Aktuelle Probleme in der Umgebung
-11.2 Risiken und Schwachstellen in der Konfiguration
-11.3 Sicherheitslücken und Optimierungspotenzial
-	12.	Zusammenfassung und Empfehlungen
-12.1 Zusammenfassung des Ist-Zustands
-12.2 Erste Empfehlungen zur Optimierung
-12.3 Nächste Schritte
-	13.	Anhang
+3.2 Organisationseinheiten (OUs) im StBA
+3.3 Vertrauensstellungen und externe Anbindungen
+
+4. Server-Ist-Zustand
+
+4.1 Übersicht der Serverrollen im Active-Directory-Kontext
+4.2 Konfiguration der Domain Controller (DCs) im StBA
+4.3 Hardware- und Softwareausstattung der Server
+
+5. Client-Ist-Zustand
+
+5.1 Verteilung und Ausstattung der Arbeitsplatzsysteme
+5.2 Betriebssysteme und zentrale Richtlinien für Clients
+5.3 Inventarisierung und Verwaltung von Endgeräten
+
+6. Benutzer- und Gruppenverwaltung
+
+6.1 Benutzerkonten (Anzahl, Rollen, Berechtigungsstufen)
+6.2 Gruppenstruktur (Sicherheits- und Verteilergruppen im StBA)
+6.3 Namenskonventionen und interne Vorgaben
+
+7. Richtlinien und Sicherheitskonzepte
+
+7.1 Gruppenrichtlinienobjekte (GPOs) im StBA
+7.2 Passwort- und Kontorichtlinien entsprechend der BSI-Vorgaben
+7.3 Berechtigungskonzepte und Sicherheitsrollen
+
+8. Replikation und Standorte
+
+8.1 Standorte und Standortverknüpfungen des StBA
+8.2 Replikationsstrategien (Zeitpläne, Bandbreitennutzung)
+8.3 Konfigurationsdetails zur Standortvernetzung
+
+9. Authentifizierungs- und Autorisierungsmethoden
+
+9.1 Kerberos- und NTLM-Authentifizierungsmethoden
+9.2 Interne und externe Autorisierungsanforderungen
+
+10. Backup und Wiederherstellung
+
+10.1 Backup-Strategie für Active Directory im StBA
+10.2 Wiederherstellungspläne (z. B. AD-Recycling, Forest Recovery)
+10.3 Testverfahren für Backup- und Wiederherstellungsprozesse
+
+11. Monitoring und Protokollierung
+
+11.1 Monitoring-Lösungen für Active Directory
+11.2 Ereignisprotokolle und Audit-Trails gemäß BSI-Standards
+11.3 Tools und zentrale Überwachungsstrategien
+
+12. Verwendete Technologien und Tools
+
+12.1 Übersicht der eingesetzten Softwarelösungen
+12.2 Drittanbieter-Tools und Zusatzlösungen
+12.3 Schnittstellen zu anderen Systemen
+	•	WSUS (Windows Server Update Services)
+	•	Exchange Server
+
+13. Anhang
+
 13.1 Glossar
 13.2 Abkürzungen
 13.3 Referenzen und Dokumente
