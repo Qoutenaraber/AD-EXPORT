@@ -23,3 +23,14 @@ ForEach-Object {
         }
     }
 }
+
+Get-GPO -All | ForEach-Object {
+    $gpo = $_
+    $permissions = Get-GPPermission -Guid $gpo.Id -All | Where-Object { $_.Trustee.Name -eq "Everyone" }
+    if ($permissions) {
+        [PSCustomObject]@{
+            GPO = $gpo.DisplayName
+            Permissions = $permissions
+        }
+    }
+}
