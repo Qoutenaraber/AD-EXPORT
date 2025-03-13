@@ -1,36 +1,19 @@
-Get-ADOrganizationalUnit -Filter * -Properties nTSecurityDescriptor | 
-ForEach-Object {
-    $ou = $_.DistinguishedName
-    $permissions = $_.nTSecurityDescriptor.Access | Where-Object { $_.IdentityReference -like "*Everyone*" }
-    if ($permissions) {
-        [PSCustomObject]@{
-            OU = $ou
-            Permissions = $permissions
-        }
-    }
-}
-
-
+$exportPath = "$env:USERPROFILE\Desktop\Everyone_Permissions.txt"
 
 Get-ADObject -Filter * -Properties nTSecurityDescriptor | 
 ForEach-Object {
     $obj = $_.DistinguishedName
     $permissions = $_.nTSecurityDescriptor.Access | Where-Object { $_.IdentityReference -like "*Everyone*" }
     if ($permissions) {
-        [PSCustomObject]@{
-            Object = $obj
-            Permissions = $permissions
+        foreach ($perm in $permissions) {
+            [PSCustomObject]@{
+                Object = $obj
+                Identity = $perm.IdentityReference
+                Permissions = $perm.AccessControlType
+                Rights = $perm.ActiveDirectoryRights
+            }
         }
     }
-}
+} | Format-Table -AutoSize | Out-File -Encoding UTF8 $exportPath
 
-Get-GPO -All | ForEach-Object {
-    $gpo = $_
-    $permissions = Get-GPPermission -Guid $gpo.Id -All | Where-Object { $_.Trustee.Name -eq "Everyone" }
-    if ($permissions) {
-        [PSCustomObject]@{
-            GPO = $gpo.DisplayName
-            Permissions = $permissions
-        }
-    }
-}
+Write-Host "Export abgeschlossen! Datei gespeichert unter: $exportPath"
